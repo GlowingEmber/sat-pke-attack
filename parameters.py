@@ -2,12 +2,14 @@ import math
 
 ### GENERATION PARAMETERS
 
-PLAINTEXT = 1
+PLAINTEXT = 0
 GENERATE_CLEARS_DATA = True
 
 INCLUDE_BETA_LITERALS_SETS_N__TXT = True
 INCLUDE_CIPHERTEXT_N__TXT = True  # human-readable printout of ciphertext hdf5 file
 INCLUDE_ENCRYPT_STDOUT_N__TXT = False
+
+AUTOMATICALLY_TEST_CODEBREAK = True
 
 ### GENERATION OPTIMIZATIONS
 
@@ -15,20 +17,25 @@ LEAVE_CLAUSES_UNSORTED = False
 
 ### ENCRYPTION PARAMETERS
 
-N = 100  # 4 # number of variables
-M = 426  # 7 # number of clauses; M > N
-K = 3  # number of variables per clause
-ALPHA = 3  # 4 or 5 are the upper bound for reasonable solve times right now
+N = 100
+M = 426
+K = 3
+ALPHA = 3
 BETA = 10
 
-### DECRYPTION PARAMETERS
+# N: number of variables total.
+# M: number of clauses total. [M > N]
+# K: number of variables per clause.
+# ALPHA: number of clauses per row. [4/5 are the upper bounds right now for reasonable solve time]
+# BETA: number of rows.
 
+### DECRYPTION PARAMETERS
 
 ### CODEBREAKING PARAMETERS
 
 TERM_LENGTH_CUTOFF = math.floor(1.9 * ALPHA)
 
-### NOT YET IMPLEMENTED
+### NOT YET IMPLEMENTED PARAMETERS
 
 # (a)
 # To counter attacks discussed in Section 3.1.2, it is prefer-

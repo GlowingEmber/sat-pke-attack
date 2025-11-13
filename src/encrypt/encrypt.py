@@ -132,7 +132,6 @@ def encrypt():
         )
         dset[:] = cipher
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="Encrypt",

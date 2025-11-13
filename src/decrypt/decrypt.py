@@ -5,7 +5,7 @@ import argparse
 
 def g(n):
 
-    with open(f"data/cipher_{n}_dir/priv_{n}.txt", "r") as file:
+    with open(f"data/cipher_{n}_dir/private_key_{n}.txt", "r") as file:
         priv = file.read()
         with h5py.File(f"data/cipher_{n}_dir/ciphertext_{n}.hdf5", "r") as file:
             if "expression" in file:
@@ -32,14 +32,17 @@ def g(n):
                 return g_res
 
 
-def decrypt(n):
+def decrypt(n, formatted_printout=False):
     g_decryption = g(n)
-    with open(f"data/cipher_{n}_dir/plain_{n}.txt", "r") as file:
-        y = int(file.read())
-        print(f"decryption for cipher {n} with plaintext y={y}:")
-        print(f"g(priv)={g_decryption}      =>      y=1")
-        if y ^ g_decryption:
-            print("FAILURE")
+
+    if formatted_printout:
+        with open(f"data/cipher_{n}_dir/plaintext_{n}.txt", "r") as file:
+            y = int(file.read())
+            print(f"decryption for cipher {n} with plaintext y={y}:")
+            print(f"g(priv)={g_decryption}      =>      y=1")
+            if y ^ g_decryption:
+                print("DECRYPTION FAILURE")
+    return g_decryption
 
 
 if __name__ == "__main__":
@@ -52,4 +55,5 @@ if __name__ == "__main__":
     parser.add_argument("n", type=int)
     args = parser.parse_args()
 
-    decrypt(args.n)
+    g_decryption = decrypt(args.n)
+    print(g_decryption)

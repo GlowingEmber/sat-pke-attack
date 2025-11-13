@@ -1,3 +1,4 @@
+from collections import defaultdict
 from parameters import *
 import subprocess
 import os
@@ -27,6 +28,7 @@ def generate(n):
 
     ciphers = []
     t = 0
+    codebreak_results = defaultdict(int)
     for _ in range(n):
 
         plaintext = PLAINTEXT
@@ -70,8 +72,42 @@ def generate(n):
                 cipher = run_zsh(cmd, capture=True)
                 file.write(cipher.stdout)
 
+        ### codebreak_success_n__txt
+        if AUTOMATICALLY_TEST_CODEBREAK:
+            cmd = f"python3 -m src.decrypt.decrypt {next_n}"
+            decryption = int(run_zsh(cmd, capture=True).stdout[:-1])
+            # print(decryption)
+
+            cmd = f"python3 -m src.codebreak.codebreak {next_n}"
+            codebreak = int(run_zsh(cmd, capture=True).stdout[:-1])
+            # print(codebreak)
+
+            # decryption == codebreak: "success"
+            # decryption != codebreak: "failure"
+            # codebreak == -1: "problem running algorithm (error 1)"
+            # codebreak == -2: "problem running algorithm (error 2)"
+            results = "unknown"
+
+            if decryption in [0,1] and decryption == codebreak:
+                results = "success"
+            if decryption in [0,1] and decryption != codebreak:
+                results = "failure"
+            if codebreak in [-1]:
+                results = "problem running algorithm (error-1)"
+            if codebreak in [-2]:
+                results = "problem running algorithm (error-2)"
+
+            codebreak_results[results] += 1
+            
+            print (f"y = {decryption} \u2227 attack(pub,c) = {codebreak}       =>      {results}")
+            for r in codebreak_results.keys():
+                key = r
+                value = codebreak_results[r]
+                print(f"{round(100*value/len(ciphers), 2)}% ({value}/{len(ciphers)}): {key}")
+            print("\n\n")
+
     if n > 1:
-        print(f"{n} ciphers ({", ".join(ciphers)}) created in {t}s")
+        print(f"{n} ciphers ({", ".join(ciphers)}) created in {round(t,2)}s")
 
 
 if __name__ == "__main__":

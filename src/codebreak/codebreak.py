@@ -57,12 +57,8 @@ def recover_beta_literals(ciphertext_n__hdf5_file):
 
             while True:
 
-                print("hi")
-                closeness = np.fromiter(
-                    map(lambda x: (x, len(group.difference(x))), ciphertext),
-                    dtype=object,
-                )
-                print(closeness)
+                closeness = map(lambda x: (x, len(group.difference(x))), ciphertext)
+
                 closest = min(closeness, key=lambda x: x[1])
 
                 max_diff = math.floor(MAX_DIFF_PCT * len(group))
@@ -81,7 +77,7 @@ def recover_beta_literals(ciphertext_n__hdf5_file):
         return sorted(beta_literals_sets)
 
 
-def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file):
+def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file, formatted_printout):
 
     beta_literals_sets = recover_beta_literals(ciphertext_n__hdf5_file)
 
@@ -102,7 +98,8 @@ def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file):
         )
 
         if len(possible_clauses) < ALPHA:
-            raise ValueError(f"<{ALPHA} clauses found")
+            # raise ValueError(f"<{ALPHA} clauses found")
+            return -1
 
         v__cnf_to_neg_anf = np.vectorize(cnf_to_neg_anf)
         C = v__cnf_to_neg_anf(possible_clauses)
@@ -134,7 +131,7 @@ def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file):
             C_iR_i = []
 
             for term in unformatted_C_iR_i:
-                # print(term)
+
 
                 coefficient = term[0][0]
                 literals = tuple(sorted([int(x) for x in set(term[0][1] + term[1])]))
@@ -162,7 +159,8 @@ def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file):
 
     if len(simplified_cipher - set(a_terms.keys())) > 0:
         # print(simplified_cipher - set(a_terms.keys()))
-        raise ValueError("Uh oh, something went wrong with the codebreaking")
+        # raise ValueError("Uh oh, something went wrong with the codebreaking")
+        return -2
 
     rows = len(a_terms.keys())
     cols = coefficient_count
@@ -174,7 +172,8 @@ def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file):
         a[i] = clause_vector(a_terms[term], cols)
         b[i] = int(term in simplified_cipher)
         if sum(a[i]) == 0 and b[i] == 1:
-            raise ValueError
+            return -3
+            # raise ValueError
 
     GF = galois.GF(2)
     a = GF(a)
@@ -185,23 +184,25 @@ def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file):
     rank_augmented = np.linalg.matrix_rank(augmented_matrix)
     y = int(rank_a != rank_augmented)
 
-    print(f"codebreaking for cipher {args.n}:")
-    print(f"A:\n{a}\nb:\n{b}")
-    lhs = f"rank([A])={rank_a} \u2227 rank([A|b])={rank_augmented}"
-    rhs = f"y={y}"
-    print(f"{lhs}       =>      {rhs}")
-
+    if formatted_printout:
+        print(f"codebreaking for cipher {args.n}:")
+        print(f"A:\n{a}\nb:\n{b}")
+        lhs = f"rank([A])={rank_a} \u2227 rank([A|b])={rank_augmented}"
+        rhs = f"y={y}"
+        print(f"{lhs}       =>      {rhs}")
     return y
 
 
-def codebreak(n):
+def codebreak(n, formatted_printout=False):
     cipher_n_dir = f"{os.environ.get("DATA_DIRECTORY")}/cipher_{n}_dir"
     ciphertext_n__hdf5 = f"{cipher_n_dir}/ciphertext_{n}.hdf5"
     clauses_n__txt = f"{cipher_n_dir}/clauses_{n}.txt"
 
     with h5py.File(ciphertext_n__hdf5, "r") as ciphertext_n__hdf5_file:
         with open(clauses_n__txt, "r") as clauses_n__txt_file:
-            y = recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file)
+            y = recover_plaintext(
+                ciphertext_n__hdf5_file, clauses_n__txt_file, formatted_printout
+            )
             return y
 
 
@@ -214,3 +215,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     y = codebreak(args.n)
+    print(y)
