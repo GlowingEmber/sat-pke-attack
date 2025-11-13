@@ -84,17 +84,6 @@ def recover_plaintext(
 
     clauses = clauses_n__txt_file.read()
     all_clauses = ast.literal_eval(clauses)
-    # print("all clauses", all_clauses)
-
-    # print("the beta literals sets found by recover_beta_literals():")
-    # for x in beta_literals_sets:
-    #     print([int(l) for l in x])
-
-    # print("the real beta literals sets:")
-    # real_beta_literals_sets = ast.literal_eval(beta_literals_sets_n__txt_file.read())
-    # for x in real_beta_literals_sets:
-    #     print(x)
-
     a_terms = defaultdict(list)
 
     coefficient_count = 0
