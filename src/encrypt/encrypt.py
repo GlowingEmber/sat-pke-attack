@@ -10,7 +10,6 @@ import numpy as np
 import h5py
 
 from parameters import *
-from memory_profiler import profile
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,7 +39,6 @@ def cnf_to_neg_anf(term):
     return term
 
 
-@profile
 def encrypt():
     J_MAP = [secure.sample(range(1, M), ALPHA) for _ in range(BETA)]
     CLAUSES = key.generate_clause_list()

@@ -2,7 +2,7 @@ import math
 
 ### GENERATION PARAMETERS
 
-PLAINTEXT = 0
+PLAINTEXT = "r" # 0, 1, or "r" (random)
 GENERATE_CLEARS_DATA = True
 
 INCLUDE_BETA_LITERALS_SETS_N__TXT = True

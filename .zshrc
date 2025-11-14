@@ -4,7 +4,7 @@ clearData() {
     fi
 }
 
-alias generate="python3 generate.py"
+alias generate="python3 -m src.encrypt.generate"
 alias encrypt="./generate.zsh"
 alias cleardata=clearData
 alias codebreak="python3 -m src.codebreak.codebreak"
@@ -12,3 +12,4 @@ alias decrypt="python3 -m src.decrypt.decrypt"
 
 export DATA_DIRECTORY="./data"
 export TIMEFMT='%U'
+

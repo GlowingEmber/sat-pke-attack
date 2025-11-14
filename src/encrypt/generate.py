@@ -32,7 +32,7 @@ def generate(n):
     for _ in range(n):
 
         plaintext = PLAINTEXT
-        if PLAINTEXT == 2:
+        if PLAINTEXT == "r":
             plaintext = random.getrandbits(1)
 
         #####

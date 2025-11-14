@@ -80,7 +80,6 @@ def recover_beta_literals(ciphertext_n__hdf5_file):
 def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file, formatted_printout):
 
     beta_literals_sets = recover_beta_literals(ciphertext_n__hdf5_file)
-
     clauses = clauses_n__txt_file.read()
     all_clauses = ast.literal_eval(clauses)
     a_terms = defaultdict(list)
@@ -158,7 +157,7 @@ def recover_plaintext(ciphertext_n__hdf5_file, clauses_n__txt_file, formatted_pr
     )
 
     if len(simplified_cipher - set(a_terms.keys())) > 0:
-        # print(simplified_cipher - set(a_terms.keys()))
+        # print(simplified_cipher - set(a_terms.keys()), file=sys.stderr)
         # raise ValueError("Uh oh, something went wrong with the codebreaking")
         return -2
 
