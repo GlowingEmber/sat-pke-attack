@@ -1,2 +1,2 @@
 #!/usr/bin/env zsh
-python3 "python3 -m src.decrypt.decrypt" "$@"
+python3 -m src.decrypt.decrypt "$@"

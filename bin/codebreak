@@ -1,2 +1,2 @@
 #!/usr/bin/env zsh
-python3 "python3 -m src.codebreak.codebreak" "$@"
+python3 -m src.codebreak.codebreak "$@"
