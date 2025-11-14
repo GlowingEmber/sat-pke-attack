@@ -20,9 +20,9 @@ def run_zsh(cmd, capture=False):
 
 
 def generate(n):
-
+    os.makedirs(my_env["DATA_DIRECTORY"], exist_ok=True)
     if GENERATE_CLEARS_DATA:
-        if os.path.isdir(my_env["DATA_DIRECTORY"]):
+        if os.path.isdir(my_env["DATA_DIRECTORY"]) and len(os.listdir(my_env["DATA_DIRECTORY"])) > 0:
             run_zsh("rm -rf $DATA_DIRECTORY/*")
             print(f"data directory cleared")
 
