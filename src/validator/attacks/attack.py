@@ -9,7 +9,7 @@ import galois
 import h5py
 import numpy as np
 
-from attack_validation.primitives.encrypt import cnf_to_neg_anf, distribute
+from validator.primitives.encrypt import cnf_to_neg_anf, distribute
 from ..parameters import *
 
 sys.path.append(

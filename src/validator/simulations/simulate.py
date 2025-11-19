@@ -20,7 +20,7 @@ def run_zsh(cmd, capture=False):
     )
 
 
-def generate(n):
+def simulate(n, g, e):
     os.makedirs(my_env["DATA_DIRECTORY"], exist_ok=True)
     if GENERATE_CLEARS_DATA:
         if (
@@ -56,7 +56,7 @@ def generate(n):
 
         #####
 
-        cmd = f'time python3 -m attack_validation.primitives.encrypt -n "{next_n}" -y "{plaintext}" >{encrypt_stdout_n__txt}'
+        cmd = f'time python3 -m validator.primitives.encrypt -n "{next_n}" -y "{plaintext}" >{encrypt_stdout_n__txt}'
         res = run_zsh(cmd, capture=True)
         print(f"cipher {next_n} created in {res.stderr[:-1]}")
 
@@ -76,12 +76,11 @@ def generate(n):
                 cipher = run_zsh(cmd, capture=True)
                 file.write(cipher.stdout)
 
-        ### codebreak_success_n__txt
-        if AUTOMATICALLY_TEST_CODEBREAK:
-            cmd = f"python3 -m attack_validation.primitives.decrypt {next_n}"
+        if e:
+            cmd = f"python3 -m validator.primitives.decrypt {next_n}"
             decryption = int(run_zsh(cmd, capture=True).stdout[:-1])
 
-            cmd = f"python3 -m attack_validation.attacks.attack {next_n}"
+            cmd = f"python3 -m validator.attacks.attack {next_n}"
             code = codebreak = int(run_zsh(cmd, capture=True).stdout[:-1])
 
             if codebreak >= 0:
@@ -136,12 +135,17 @@ def generate(n):
     if n > 1:
         print(f"{n} ciphers ({", ".join(ciphers)}) created in {round(t,2)}s")
 
-def main():
+def main(g=False, e=False):
     parser = argparse.ArgumentParser(prog="Generate")
     parser.add_argument("n", type=int)
     args = parser.parse_args()
-
-    generate(args.n)
+    simulate(args.n, g, e)
 
 if __name__ == "__main__":
     main()
+
+def generate():
+    main(g=True)
+
+def evaluate():
+    main(e=True)
