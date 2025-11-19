@@ -10,7 +10,7 @@ dependencies = [
     "numpy==2.3.4",
 ]
 [project.optional-dependencies]
-EXTRAS = ["termcolor==3.2.0"]
+colors = ["termcolor==3.2.0"]
 [project.scripts]
 generate = "attack_validation.testing.tests:main"
 decrypt = "attack_validation.decrypt.decrypt:main"
