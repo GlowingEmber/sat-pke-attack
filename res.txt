@@ -1,7 +1,7 @@
 HDF5 "/Users/ethanhopkins/Desktop/CEF/validation/tests/cipher_167_dir/ciphertext_167.hdf5" {
 GROUP "/" {
    
-   DATASET "expression" {
+   DATASET "ciphertext" {
       DATATYPE  H5T_VLEN { H5T_IEEE_F64LE }
       DATASPACE  SIMPLE { ( 1677 ) / ( 1677 ) }
       DATA {

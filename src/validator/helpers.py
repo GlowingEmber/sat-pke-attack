@@ -1,10 +1,31 @@
+import subprocess
 import numpy as np
-
 from itertools import chain as flatten, combinations as subset, product as cartesian
 
-CONSTANT_MONOMIAL = tuple() # empty tuple
+CONSTANT_MONOMIAL = tuple()  # empty tuple
 
-def distribute(iterable):  # from itertools powerset recipe
+class Coefficient:
+    def __init__(self, v):
+        self.value = v
+
+    def __repr__(self):
+        return f"Coefficient(v={self.value})"
+
+    def __eq__(self, other):
+        if not isinstance(other, Coefficient):
+            raise NotImplementedError
+        return self.value == other.value
+
+def run_zsh(cmd, capture=False):
+    return subprocess.run(
+        cmd,
+        shell=True,
+        text=True,
+        executable="/bin/zsh",
+        capture_output=capture,
+    )
+
+def distribute(iterable):
     return flatten.from_iterable(subset(iterable, r) for r in range(len(iterable) + 1))
 
 def product_simplify(clause, random):
@@ -16,10 +37,9 @@ def product_simplify(clause, random):
     return product
 
 def cnf_to_neg_anf(term):
-    # print(term)
     term = term + [(1,)]
     term = cartesian(*term)
-    term = filter(lambda t: 0 not in t, term)  # a*0 = 0
-    term = map(lambda t: tuple(filter(lambda t: t != 1, t)), term)  # a*1 = a
-    term = map(lambda t: tuple(set(t)), term)  # a*a = a
+    term = filter(lambda t: 0 not in t, term)
+    term = map(lambda t: tuple(filter(lambda t: t != 1, t)), term)
+    term = map(lambda t: tuple(set(t)), term)
     return term

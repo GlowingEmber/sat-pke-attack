@@ -1,6 +1,6 @@
 ### testing
 GENERATE_CLEARS_DATA = False # Clears all ciphertexts in tests directory.
-INCLUDE_CIPHERTEXT_N__TXT = False  # Creates a readable ciphertext file.
+INCLUDE_READABLE_CIPHERTEXT = False  # Creates a readable ciphertext file.
 LEAVE_CLAUSES_UNSORTED = False # Optimization if clauses do not need to be read.
 
 ### encryption

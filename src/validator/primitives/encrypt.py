@@ -5,10 +5,8 @@ import argparse
 import secrets
 from itertools import chain as flatten
 from collections import Counter
-
 import numpy as np
 import h5py
-
 from ..parameters import *
 from ..helpers import *
 
@@ -17,11 +15,12 @@ sys.path.append(
 )
 secure = secrets.SystemRandom()
 
-def encrypt(args):
+
+def _encrypt(args):
     J_MAP = [secure.sample(range(1, M), ALPHA) for _ in range(BETA)]
     CLAUSES = key.generate_clause_list()
 
-    cipher = np.empty(0, dtype=object)
+    ciphertext = np.empty(0, dtype=object)
     beta_literals_sets = []
 
     for a in range(BETA):
@@ -34,12 +33,10 @@ def encrypt(args):
 
         for i in range(ALPHA):
 
-            ### clause_i
+
             clause = CLAUSES[J_MAP[a][i]]
             clause_literals_set = set([l[0] for l in clause])
             clause = cnf_to_neg_anf(clause)
-
-            ### random_i
             beta_literals_subset = filter(
                 lambda t: t[0] not in clause_literals_set or t[1] >= 2, beta_counts_set
             )
@@ -47,23 +44,18 @@ def encrypt(args):
             anf_all_terms = np.fromiter(distribute(beta_literals_subset), dtype=tuple)
             random = filter(lambda _: secure.choice([True, False]), anf_all_terms)
 
-            ### clause_i * random_i
+
             summand = product_simplify(clause, random)
-            summand = map(lambda t: tuple(t), summand)
-            summand = np.fromiter(summand, dtype=map)
-            cipher = np.append(cipher, summand)
+            summand = np.fromiter(map(lambda t: tuple(t), summand), dtype=map)
+            ciphertext = np.append(ciphertext, summand)
 
     beta_literals_sets = sorted(beta_literals_sets)
 
-    cipher = np.fromiter([tuple(np.sort(t, axis=0)) for t in cipher], dtype=object)
-
-    cipher = set(Counter(cipher).items())
-    cipher = filter(lambda t: t[1] % 2 == 1, cipher)
-    cipher = list(map(lambda t: t[0], cipher))
-
-    #####
-
-    constant_term = int(cipher.count(tuple()))
+    ciphertext = np.fromiter([tuple(np.sort(t, axis=0)) for t in ciphertext], dtype=object)
+    ciphertext = set(Counter(ciphertext).items())
+    ciphertext = filter(lambda t: t[1] % 2 == 1, ciphertext)
+    ciphertext = list(map(lambda t: t[0], ciphertext))
+    constant_term = int(ciphertext.count(tuple()))
     y_term = args.plaintext
 
     print("constant term", constant_term)
@@ -73,23 +65,23 @@ def encrypt(args):
     # y_term=1, constant_term=0     =>      add constant term 1 aka ()
     # y_term=1, constant_term=1     =>      remove constant term 1 aka ()
     if y_term == 1 and constant_term == 0:
-        cipher.append(tuple())
+        ciphertext.append(tuple())
     elif y_term == 1 and constant_term == 1:
-        cipher.remove(tuple())
+        ciphertext.remove(tuple())
 
-    ### clauses_n__txt AND # clauses_n__hdf5
     if LEAVE_CLAUSES_UNSORTED:
-        cipher = sorted(
-            cipher,
+        ciphertext = sorted(
+            ciphertext,
             key=lambda term: np.array([p(term) for p in [len]]),
             reverse=True,
         )
 
-
-    PRIVATE_KEY_FILEPATH = f"tests/cipher_{args.n}_dir/private_key_{args.n}.txt"
-    BETA_LITERALS_SETS_FILEPATH = f"tests/cipher_{args.n}_dir/beta_literals_sets_{args.n}.txt"
-    CLAUSES_FILEPATH = f"tests/cipher_{args.n}_dir/clauses_{args.n}.txt"
-    CIPHERTEXT_FILEPATH = f"tests/cipher_{args.n}_dir/ciphertext_{args.n}.hdf5"
+    PRIVATE_KEY_FILEPATH = f"tests/cipher_{args.i}_dir/private_key_{args.i}.txt"
+    BETA_LITERALS_SETS_FILEPATH = (
+        f"tests/cipher_{args.i}_dir/beta_literals_sets_{args.i}.txt"
+    )
+    CLAUSES_FILEPATH = f"tests/cipher_{args.i}_dir/clauses_{args.i}.txt"
+    CIPHERTEXT_FILEPATH = f"tests/cipher_{args.i}_dir/ciphertext_{args.i}.hdf5"
 
     f = open(PRIVATE_KEY_FILEPATH, "w")
     f.write(str(f"{key.PRIVATE_KEY_STRING}\n"))
@@ -103,24 +95,20 @@ def encrypt(args):
     f.write(str(CLAUSES))
     f.close()
 
-    vlen_dtype = h5py.vlen_dtype(np.dtype("float64"))
     with h5py.File(CIPHERTEXT_FILEPATH, "w") as f:
+        vlen_dtype = h5py.vlen_dtype(np.dtype("float64"))
         dset = f.create_dataset(
-            name="expression", shape=(len(cipher),), dtype=vlen_dtype
+            name="ciphertext", shape=(len(ciphertext),), dtype=vlen_dtype
         )
-        dset[:] = cipher
+        dset[:] = ciphertext
+
 
 def main():
-    parser = argparse.ArgumentParser(
-    prog="Encrypt",
-    description="Generates ciphertext file from plaintext based on Sebastian E. Schmittner's SAT-Based Public Key Encryption Scheme",
-    epilog="https://eprint.iacr.org/2015/771.pdf",
-    )
-    parser.add_argument("-n", type=int)
+    parser = argparse.ArgumentParser(prog="Encrypt")
+    parser.add_argument("-i", type=int)
     parser.add_argument("-y", "--plaintext", choices=[1, 0], type=int)
     args = parser.parse_args()
-
-    encrypt(args)
+    _encrypt(args)
 
 if __name__ == "__main__":
     main()

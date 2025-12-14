@@ -8,9 +8,9 @@ dependencies = [
     "llvmlite==0.45.1",
     "numba==0.62.1",
     "numpy==2.3.4",
+    "tqdm==4.67.1",
 ]
 [project.scripts]
-generate = "validator.simulations.simulate:generate"
-evaluate = "validator.simulations.simulate:evaluate"
+evaluate = "validator.evaluations.evaluate:main"
 decrypt = "validator.primitives.decrypt:main"
 attack = "validator.attacks.attack:main"

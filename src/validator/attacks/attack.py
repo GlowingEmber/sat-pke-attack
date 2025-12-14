@@ -4,11 +4,9 @@ import sys
 import ast
 from collections import defaultdict
 from itertools import chain as flatten, product as cartesian
-
 import galois
 import h5py
 import numpy as np
-
 from ..parameters import *
 from ..helpers import *
 
@@ -16,24 +14,10 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-
-class Coefficient:
-    def __init__(self, v):
-        self.value = v
-
-    def __repr__(self):
-        return f"Coefficient(v={self.value})"
-
-    def __eq__(self, other):
-        if not isinstance(other, Coefficient):
-            raise NotImplementedError
-        return self.value == other.value
-
-
 def _recover_beta_literals(ciphertext_n__hdf5_file):
-    if "expression" in ciphertext_n__hdf5_file:
+    if "ciphertext" in ciphertext_n__hdf5_file:
 
-        ciphertext = ciphertext_n__hdf5_file["expression"]
+        ciphertext = ciphertext_n__hdf5_file["ciphertext"]
         ciphertext = np.array(ciphertext[:])
         ciphertext = map(tuple, ciphertext)
 
@@ -83,7 +67,6 @@ def _recover_beta_literals(ciphertext_n__hdf5_file):
 
 
 def _recover_plaintext(
-    args,
     ciphertext_n__hdf5_file,
     clauses_n__txt_file,
     beta_literals_sets_n__txt_file,
@@ -158,15 +141,15 @@ def _recover_plaintext(
             v[c.value] = 1
         return v
 
-    ciphertext = ciphertext_n__hdf5_file["expression"][:]
+    ciphertext = ciphertext_n__hdf5_file["ciphertext"][:]
     ciphertext = set(map(lambda x: tuple([int(l) for l in x]), ciphertext))
+
 
 
     # if y=0 and const_term = 0: real ciphertext contains NOT contain ()
     # if y=0 and const_term = 1: real ciphertext contains contain ()
     # if y=1 and const_term = 0: real ciphertext contains contain ()
     # if y=1 and const_term = 1: real ciphertext contains NOT contain ()
-
     missing_terms = ciphertext - set(a_terms.keys())
     if len(missing_terms) > 0:
         if missing_terms == {tuple()}:
@@ -196,30 +179,25 @@ def _recover_plaintext(
     rank_augmented = np.linalg.matrix_rank(augmented_matrix)
     y = int(rank_a != rank_augmented)
     
-    print(rank_a, file=sys.stderr)
-    print(a.shape, file=sys.stderr)
-    print(rank_augmented, file=sys.stderr)
 
-    # print(f"codebreaking for cipher {args.n}:")
-    # print(f"A:\n{a}\nb:\n{b}")
-    # lhs = f"rank([A])={rank_a} \u2227 rank([A|b])={rank_augmented}"
-    # rhs = f"y={y}"
-    # print(f"{lhs}       =>      {rhs}")
+    lhs = f"rank([A])={rank_a} \u2227 rank([A|b])={rank_augmented}"
+    rhs = f"y={y}"
+    print(f"{lhs}       =>      {rhs}", file=sys.stderr)
+    
     return y
 
 
 def attack(args):
 
-    CIPHERTEXT_DIRPATH = f"tests/cipher_{args.n}_dir"
-    CIPHERTEXT_FILEPATH = f"{CIPHERTEXT_DIRPATH}/ciphertext_{args.n}.hdf5"
-    CLAUSES_FILEPATH = f"{CIPHERTEXT_DIRPATH}/clauses_{args.n}.txt"
-    BETA_LITERALS_SETS_FILEPATH = f"{CIPHERTEXT_DIRPATH}/beta_literals_sets_{args.n}.txt"
+    CIPHERTEXT_DIRPATH = f"tests/cipher_{args.i}_dir"
+    CIPHERTEXT_FILEPATH = f"{CIPHERTEXT_DIRPATH}/ciphertext_{args.i}.hdf5"
+    CLAUSES_FILEPATH = f"{CIPHERTEXT_DIRPATH}/clauses_{args.i}.txt"
+    BETA_LITERALS_SETS_FILEPATH = f"{CIPHERTEXT_DIRPATH}/beta_literals_sets_{args.i}.txt"
 
     with h5py.File(CIPHERTEXT_FILEPATH, "r") as CIPHERTEXT_FILE:
         with open(CLAUSES_FILEPATH, "r") as CLAUSES_FILE:
             with open(BETA_LITERALS_SETS_FILEPATH, "r") as BETA_LITERALS_SETS_FILE:
                 y = _recover_plaintext(
-                    args,
                     CIPHERTEXT_FILE,
                     CLAUSES_FILE,
                     BETA_LITERALS_SETS_FILE
@@ -227,15 +205,10 @@ def attack(args):
                 return y
 
 
-###
-
-
 def main():
     parser = argparse.ArgumentParser(prog="Attack")
-
-    parser.add_argument("n", type=int)
+    parser.add_argument("i", type=int)
     args = parser.parse_args()
-
     y = attack(args)
     print(y)
 

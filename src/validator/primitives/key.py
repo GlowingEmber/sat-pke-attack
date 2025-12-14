@@ -9,8 +9,7 @@ from ..parameters import *
 
 secure = secrets.SystemRandom()
 
-PRIVATE_KEY = secrets.randbits(N)
-PRIVATE_KEY_STRING = f"{bin(PRIVATE_KEY)[2:]:0>{N}}"  # B^n
+PRIVATE_KEY_STRING = f"{bin(secrets.randbits(N))[2:]:0>{N}}"  # B^n
 
 validate_clause = (
     lambda literal_index, parity: int(PRIVATE_KEY_STRING[literal_index]) == parity
