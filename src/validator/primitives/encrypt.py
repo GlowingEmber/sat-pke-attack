@@ -3,47 +3,22 @@ import os
 from . import key
 import argparse
 import secrets
-from itertools import chain as flatten, combinations as subset, product as cartesian
+from itertools import chain as flatten
 from collections import Counter
 
 import numpy as np
 import h5py
 
 from ..parameters import *
+from ..helpers import *
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 secure = secrets.SystemRandom()
 
-
-def distribute(iterable):  # from itertools powerset recipe
-    return flatten.from_iterable(subset(iterable, r) for r in range(len(iterable) + 1))
-
-
-def product_simplify(clause, random):
-    clause = np.fromiter(clause, dtype=tuple)
-    random = np.fromiter(random, dtype=tuple)
-    x_array, y_array = np.meshgrid(clause, random)
-    product = np.fromiter(zip(x_array.ravel(), y_array.ravel()), dtype=tuple)
-    product = [set(flatten(*t)) for t in product]
-    return product
-
-
-def cnf_to_neg_anf(term):
-    term = term + [(1,)]
-    term = cartesian(*term)
-    term = filter(lambda t: 0 not in t, term)  # a*0 = 0
-    term = map(lambda t: tuple(filter(lambda t: t != 1, t)), term)  # a*1 = a
-    term = map(lambda t: tuple(set(t)), term)  # a*a = a
-    return term
-
-
 def encrypt(args):
     J_MAP = [secure.sample(range(1, M), ALPHA) for _ in range(BETA)]
-    ### NOTE: this currently samples WITHOUT replacement for each row, 
-    ### but with replacement between rows.
-    ### Is this the intended behavior? 
     CLAUSES = key.generate_clause_list()
 
     cipher = np.empty(0, dtype=object)
@@ -80,14 +55,18 @@ def encrypt(args):
 
     beta_literals_sets = sorted(beta_literals_sets)
 
+    cipher = np.fromiter([tuple(np.sort(t, axis=0)) for t in cipher], dtype=object)
+
     cipher = set(Counter(cipher).items())
     cipher = filter(lambda t: t[1] % 2 == 1, cipher)
     cipher = list(map(lambda t: t[0], cipher))
 
     #####
 
-    constant_term = int(tuple() in cipher)
+    constant_term = int(cipher.count(tuple()))
     y_term = args.plaintext
+
+    print("constant term", constant_term)
 
     # y_term=0, constant_term=0     =>      do nothing
     # y_term=0, constant_term=1     =>      do nothing
@@ -95,38 +74,37 @@ def encrypt(args):
     # y_term=1, constant_term=1     =>      remove constant term 1 aka ()
     if y_term == 1 and constant_term == 0:
         cipher.append(tuple())
-    if y_term == 1 and constant_term == 1:
+    elif y_term == 1 and constant_term == 1:
         cipher.remove(tuple())
-
-    cipher = np.fromiter([np.sort(t, axis=0) for t in cipher], dtype=object)
 
     ### clauses_n__txt AND # clauses_n__hdf5
     if LEAVE_CLAUSES_UNSORTED:
         cipher = sorted(
             cipher,
-            key=lambda term: np.array([p(term) for p in CIPHERTEXT_SORTING_ORDER]),
+            key=lambda term: np.array([p(term) for p in [len]]),
             reverse=True,
         )
 
-    ### private_key_n__txt
-    f = open(f"{os.environ.get("DATA_DIRECTORY")}/cipher_{args.n}_dir/private_key_{args.n}.txt", "w")
+
+    PRIVATE_KEY_FILEPATH = f"tests/cipher_{args.n}_dir/private_key_{args.n}.txt"
+    BETA_LITERALS_SETS_FILEPATH = f"tests/cipher_{args.n}_dir/beta_literals_sets_{args.n}.txt"
+    CLAUSES_FILEPATH = f"tests/cipher_{args.n}_dir/clauses_{args.n}.txt"
+    CIPHERTEXT_FILEPATH = f"tests/cipher_{args.n}_dir/ciphertext_{args.n}.hdf5"
+
+    f = open(PRIVATE_KEY_FILEPATH, "w")
     f.write(str(f"{key.PRIVATE_KEY_STRING}\n"))
     f.close()
 
-    ### beta_literals_sets_n__txt
-    f = open(f"{os.environ.get("DATA_DIRECTORY")}/cipher_{args.n}_dir/beta_literals_sets_{args.n}.txt", "w")
+    f = open(BETA_LITERALS_SETS_FILEPATH, "w")
     f.write(str(f"{beta_literals_sets}\n"))
     f.close()
 
-    ### clauses_n__txt
-    f = open(f"{os.environ.get("DATA_DIRECTORY")}/cipher_{args.n}_dir/clauses_{args.n}.txt", "w")
+    f = open(CLAUSES_FILEPATH, "w")
     f.write(str(CLAUSES))
     f.close()
 
-    ### clauses_n__hdf5
     vlen_dtype = h5py.vlen_dtype(np.dtype("float64"))
-    ciphertext_n__hdf5_file = f"{os.environ.get("DATA_DIRECTORY")}/cipher_{args.n}_dir/ciphertext_{args.n}.hdf5"
-    with h5py.File(ciphertext_n__hdf5_file, "w") as f:
+    with h5py.File(CIPHERTEXT_FILEPATH, "w") as f:
         dset = f.create_dataset(
             name="expression", shape=(len(cipher),), dtype=vlen_dtype
         )

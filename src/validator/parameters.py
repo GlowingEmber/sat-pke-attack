@@ -1,62 +1,19 @@
+### testing
+GENERATE_CLEARS_DATA = False # Clears all ciphertexts in tests directory.
+INCLUDE_CIPHERTEXT_N__TXT = False  # Creates a readable ciphertext file.
+LEAVE_CLAUSES_UNSORTED = False # Optimization if clauses do not need to be read.
+
+### encryption
+PLAINTEXT = "r" # Plaintext. [0, 1, or "r" (random)]
+N = 100 # Number of variables total.
+M = 426 # Number of clauses total. [M > N]
+K = 3 # Number of variables per clause.
+ALPHA = 3 # Number of clauses per row.
+BETA = 10 # Number of rows.
+CONDITION_A = False # Clauses within one tuple share variables. [Discussed in Section 3.1.2]
+CONDITION_B = False # Tuples share at least one clause with another tuple. [Discussed in Section 3.2]
+CONDITION_C = False # Each clause of public key appears in some tuple. [Discussed in Section 3.3]
+
+### attack
 import math
-
-### GENERATION PARAMETERS
-
-PLAINTEXT = "r" # 0, 1, or "r" (random)
-GENERATE_CLEARS_DATA = True
-
-INCLUDE_CIPHERTEXT_N__TXT = True  # human-readable printout of ciphertext hdf5 file
-INCLUDE_ENCRYPT_STDOUT_N__TXT = False
-
-AUTOMATICALLY_TEST_CODEBREAK = True
-
-### GENERATION OPTIMIZATIONS
-
-LEAVE_CLAUSES_UNSORTED = False
-
-### ENCRYPTION PARAMETERS
-
-N = 100
-M = 426
-K = 3
-ALPHA = 3
-BETA = 10
-
-# N: number of variables total.
-# M: number of clauses total. [M > N]
-# K: number of variables per clause.
-# ALPHA: number of clauses per row. [4/5 are the upper bounds right now for reasonable solve time]
-# BETA: number of rows.
-
-### DECRYPTION PARAMETERS
-
-### CODEBREAKING PARAMETERS
-
 TERM_LENGTH_CUTOFF = math.floor(1.9 * ALPHA)
-
-### NOT YET IMPLEMENTED PARAMETERS
-
-# (a)
-# To counter attacks discussed in Section 3.1.2, it is prefer-
-# able if the clauses within one tuple share variables. This
-# is particularly important if one of the clauses does not
-# contain negations, i.e. s(i, 1) = . . . = s(i, k) = 0.
-CONDITION_A = False
-
-# (b)
-# We have to ensure that each tuple shares at least one
-# clause with another tuple to counter the attack dis-
-# cussed in Section 3.2.
-CONDITION_B = False
-
-# (c)
-# Each clause of pub is to appear in some tuple as dis
-# cussed in Section 3.3.
-CONDITION_C = False
-
-
-CIPHERTEXT_SORTING_ORDER = [
-    len,  # shortness of monomial
-    # lambda term: list(term) # literals of monomial, ascending
-]
-REVERSE_CIPHERTEXT_SORTING = False

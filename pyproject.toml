@@ -9,8 +9,6 @@ dependencies = [
     "numba==0.62.1",
     "numpy==2.3.4",
 ]
-[project.optional-dependencies]
-colors = ["termcolor==3.2.0"]
 [project.scripts]
 generate = "validator.simulations.simulate:generate"
 evaluate = "validator.simulations.simulate:evaluate"
