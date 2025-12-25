@@ -1,4 +1,5 @@
 from collections import Counter, defaultdict
+import sys
 from matplotlib.pylab import beta
 import numpy as np
 import sklearn
@@ -65,7 +66,7 @@ def _blr__clusters(ciphertext_n__hdf5_file):
 
         ciphertext = ciphertext_n__hdf5_file["ciphertext"]
         ciphertext = ciphertext[:]
-        dimensions = max([np.max(m) for m in ciphertext])
+        dimensions = max([np.max(m, initial=0) for m in ciphertext])
 
         def _monomial_to_vector(monomial):
             v = [0] * dimensions
@@ -88,7 +89,7 @@ def _blr__clusters(ciphertext_n__hdf5_file):
             # print(center)
             beta_literals_set = sorted(np.argsort(center)[::-1][:K*ALPHA + 1] + 1)
             beta_literals_set = list(filter(lambda v: center[v-1] > 0, beta_literals_set))
-            print(len(beta_literals_set))
+            # print(len(beta_literals_set))
             return beta_literals_set
         
         def _k_means():
@@ -100,7 +101,7 @@ def _blr__clusters(ciphertext_n__hdf5_file):
             beta_literals_sets = [_retrieve_beta_literals(center) for center in kmeans.cluster_centers_]
 
             # print([sorted(x) for x in kmeans.cluster_centers_][0])
-            print(beta_literals_sets)
+            # print(beta_literals_sets)
 
             return beta_literals_sets
         
@@ -118,6 +119,7 @@ def _blr__clusters(ciphertext_n__hdf5_file):
             beta_literals_sets = []
             for x in beta_literals_sets_counts.values():
                 beta_literals_sets.append(np.sort(np.fromiter(x, dtype=np.int64).astype(int)))
+                print("HI", file=sys.stderr)
             return beta_literals_sets
 
         return _spectral_clustering()

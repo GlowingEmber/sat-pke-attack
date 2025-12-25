@@ -22,8 +22,8 @@ def _recover_plaintext(
     beta_literals_sets_n__txt_file,
 ):
 
-    real_beta_literals_sets = ast.literal_eval(beta_literals_sets_n__txt_file.read())
     recovered_beta_literals_sets = _blr__clusters(ciphertext_n__hdf5_file)
+    # real_beta_literals_sets = ast.literal_eval(beta_literals_sets_n__txt_file.read())
     # if real_beta_literals_sets != recovered_beta_literals_sets:
     #     return -1
 
@@ -42,7 +42,7 @@ def _recover_plaintext(
             ),
             dtype=list,
         )
-        print(possible_clauses)
+        # print(possible_clauses)
 
         if len(possible_clauses) < ALPHA:
             return -2
@@ -165,6 +165,7 @@ def main():
     parser.add_argument("i", type=int)
     args = parser.parse_args()
     y = attack(args)
+    print(y, file=sys.stderr)
     print(y)
 
 

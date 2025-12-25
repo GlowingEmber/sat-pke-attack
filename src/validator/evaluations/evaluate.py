@@ -55,10 +55,13 @@ def _evaluate(args):
                 file.write(cipher.stdout)
 
         cmd = f"python3 -m validator.primitives.decrypt {i}"
-        decryption = int(run_zsh(cmd, capture=True).stdout[:-1])
+        decryption_results = run_zsh(cmd, capture=True)
+        decryption = int(decryption_results.stdout[:-1])
+
 
         cmd = f"python3 -m validator.attacks.attack {i}"
-        attack = int(run_zsh(cmd, capture=True).stdout[:-1])
+        attack_results = run_zsh(cmd, capture=True)
+        attack = int(attack_results.stdout[:-1])
 
         code = attack
         if code >= 0:
