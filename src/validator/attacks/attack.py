@@ -42,7 +42,6 @@ def _recover_plaintext(
             ),
             dtype=list,
         )
-        # print(possible_clauses)
 
         if len(possible_clauses) < ALPHA:
             return -2
@@ -135,9 +134,9 @@ def _recover_plaintext(
     y = int(rank_a != rank_augmented)
     
 
-    lhs = f"rank([A])={rank_a} \u2227 rank([A|b])={rank_augmented}"
-    rhs = f"y={y}"
-    print(f"{lhs}       =>      {rhs}", file=sys.stderr)
+    # lhs = f"rank([A])={rank_a} \u2227 rank([A|b])={rank_augmented}"
+    # rhs = f"y={y}"
+    # print(f"{lhs}       =>      {rhs}", file=sys.stderr)
     
     return y
 
@@ -165,7 +164,6 @@ def main():
     parser.add_argument("i", type=int)
     args = parser.parse_args()
     y = attack(args)
-    print(y, file=sys.stderr)
     print(y)
 
 

@@ -6,7 +6,7 @@ cd path/to/folder
 direnv allow
 python3 -m venv venv
 source venv/bin/activate
-pip install .
+pip install -e .
 ```
 
 ## Usage

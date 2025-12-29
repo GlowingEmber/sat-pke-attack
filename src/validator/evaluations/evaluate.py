@@ -61,7 +61,12 @@ def _evaluate(args):
 
         cmd = f"python3 -m validator.attacks.attack {i}"
         attack_results = run_zsh(cmd, capture=True)
-        attack = int(attack_results.stdout[:-1])
+        try:
+            attack = int(attack_results.stdout[:-1])
+        except ValueError as e:
+            print(e, attack_results)
+            return
+
 
         code = attack
         if code >= 0:
