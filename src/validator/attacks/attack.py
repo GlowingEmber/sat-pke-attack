@@ -43,7 +43,7 @@ def _recover_plaintext(
             dtype=list,
         )
 
-        if len(possible_clauses) < ALPHA:
+        if len(possible_clauses) < BETA:
             return -2
 
         C = [cnf_to_neg_anf(c) for c in possible_clauses]

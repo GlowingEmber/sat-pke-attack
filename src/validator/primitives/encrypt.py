@@ -3,6 +3,7 @@ import os
 from . import key
 import argparse
 import secrets
+import random
 from itertools import chain as flatten
 from collections import Counter
 import numpy as np
@@ -16,14 +17,26 @@ sys.path.append(
 secure = secrets.SystemRandom()
 
 
+def generate_j_map():
+    if CONDITIONS_B_C:
+        if ALPHA != M:
+            raise ValueError()
+        s = list(range(M))
+        secure.shuffle(s)
+
+        return [[s[(i + a - 1) % M] for a in range(1, BETA+1)] for i in range(1, ALPHA+1)]
+
+    return [secure.sample(range(M), BETA) for _ in range(ALPHA)]
+
+
 def _encrypt(args):
-    J_MAP = [secure.sample(range(1, M), ALPHA) for _ in range(BETA)]
     CLAUSES = key.generate_clause_list()
+    J_MAP = generate_j_map()
 
     ciphertext = np.empty(0, dtype=object)
     beta_literals_sets = []
 
-    for a in range(BETA):
+    for a in range(ALPHA):
 
         beta_clauses_list = [CLAUSES[r] for r in J_MAP[a]]
         beta_literals_list = [l[0] for l in flatten(*beta_clauses_list)]
@@ -31,8 +44,7 @@ def _encrypt(args):
         beta_literals_set = sorted(set(beta_literals_list))
         beta_literals_sets.append(beta_literals_set)
 
-        for i in range(ALPHA):
-
+        for i in range(BETA):
 
             clause = CLAUSES[J_MAP[a][i]]
             clause_literals_set = set([l[0] for l in clause])
@@ -44,14 +56,15 @@ def _encrypt(args):
             anf_all_terms = np.fromiter(distribute(beta_literals_subset), dtype=tuple)
             random = filter(lambda _: secure.choice([True, False]), anf_all_terms)
 
-
             summand = product_simplify(clause, random)
             summand = np.fromiter(map(lambda t: tuple(t), summand), dtype=map)
             ciphertext = np.append(ciphertext, summand)
 
     beta_literals_sets = sorted(beta_literals_sets)
 
-    ciphertext = np.fromiter([tuple(np.sort(t, axis=0)) for t in ciphertext], dtype=object)
+    ciphertext = np.fromiter(
+        [tuple(np.sort(t, axis=0)) for t in ciphertext], dtype=object
+    )
     ciphertext = set(Counter(ciphertext).items())
     ciphertext = filter(lambda t: t[1] % 2 == 1, ciphertext)
     ciphertext = list(map(lambda t: t[0], ciphertext))
@@ -77,9 +90,7 @@ def _encrypt(args):
         )
 
     PRIVATE_KEY_FILEPATH = f"tests/c_{args.i}/private_key_{args.i}.txt"
-    BETA_LITERALS_SETS_FILEPATH = (
-        f"tests/c_{args.i}/beta_literals_sets_{args.i}.txt"
-    )
+    BETA_LITERALS_SETS_FILEPATH = f"tests/c_{args.i}/beta_literals_sets_{args.i}.txt"
     CLAUSES_FILEPATH = f"tests/c_{args.i}/clauses_{args.i}.txt"
     CIPHERTEXT_FILEPATH = f"tests/c_{args.i}/ciphertext_{args.i}.hdf5"
 
@@ -109,6 +120,7 @@ def main():
     parser.add_argument("-y", "--plaintext", choices=[1, 0], type=int)
     args = parser.parse_args()
     _encrypt(args)
+
 
 if __name__ == "__main__":
     main()

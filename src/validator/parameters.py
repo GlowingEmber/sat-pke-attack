@@ -1,19 +1,23 @@
-### testing
-EVALUATE_CLEARS_DATA = True # Clears all ciphertexts in tests directory.
+### Testing parameters
+EVALUATE_CLEARS_DATA = True  # `evaluate n` clears all ciphertexts in ~/tests/
 INCLUDE_READABLE_CIPHERTEXT = True  # Creates a readable ciphertext file.
-LEAVE_CLAUSES_UNSORTED = False # Optimization if clause order is not important for readability.
+LEAVE_CLAUSES_UNSORTED = False  # Optimization if clause order is unimportant.
 
-### encryption
-PLAINTEXT = "r" # Plaintext. [0, 1, or "r" (random)]
-N = 100 # Number of variables total.
-M = 426 # Number of clauses total. [M > N]
-K = 3 # Number of variables per clause.
-ALPHA = 3 # Number of clauses per row.
-BETA = 10 # Number of rows.
-CONDITION_A = False # Clauses within one tuple share variables. [Discussed in Section 3.1.2]
-CONDITION_B = False # Tuples share at least one clause with another tuple. [Discussed in Section 3.2]
-CONDITION_C = False # Each clause of public key appears in some tuple. [Discussed in Section 3.3]
+### Encryption parameters
+PLAINTEXT = "r"  # Plaintext. [0, 1, or "r" (random)]
+N = 100  # Number of variables total.
+M = 10  # Number of clauses total. [M > N]
+K = 3  # Number of variables per clause.
+BETA = 3  # Number of clauses per row.
+ALPHA = 10  # Number of rows.
 
-### attack
+### Encryption invariants [Section 2.2]
+# A) Clauses within one tuple ("beta groupings") share variables. [Discussed in Section 3.1.2]
+# B) Tuples share at least one clause with another tuple. [Discussed in Section 3.2]
+# C) Each clause of public key appears in some tuple. [Discussed in Section 3.3]
+CONDITION_A = False
+CONDITIONS_B_C = True
+
+### Attack parameters
 import math
-TERM_LENGTH_CUTOFF = math.floor(1.6 * ALPHA) # 1.9? 1.6?
+TERM_LENGTH_CUTOFF = math.floor(1.6 * BETA)  # 1.9? 1.6?

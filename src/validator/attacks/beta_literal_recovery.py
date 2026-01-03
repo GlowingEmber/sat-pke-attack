@@ -23,7 +23,7 @@ def _blr__naive(ciphertext_n__hdf5_file):
 
         groups = []
 
-        while len(groups) < BETA and len(ciphertext) > 0:
+        while len(groups) < ALPHA and len(ciphertext) > 0:
 
             largest = max(ciphertext, key=len)
             group = set(largest)
@@ -87,13 +87,13 @@ def _blr__clusters(ciphertext_n__hdf5_file):
                 for i, v in enumerate(center):
                     if 0>v or v<0.1:
                         center[i] = 0
-                beta_literals_set = sorted(np.argsort(center)[::-1][:K*ALPHA + 1] + 1)
+                beta_literals_set = sorted(np.argsort(center)[::-1][:K*BETA + 1] + 1)
                 beta_literals_set = list(filter(lambda v: center[v-1] > 0, beta_literals_set))
                 return beta_literals_set
     
             ciphertext = list(map(_monomial_to_vector, ciphertext))
             ciphertext_vectors = np.array(ciphertext)
-            kmeans = sklearn.cluster.KMeans(n_clusters=BETA, random_state=0, n_init='auto')
+            kmeans = sklearn.cluster.KMeans(n_clusters=ALPHA, random_state=0, n_init='auto')
             kmeans.fit(ciphertext_vectors)
 
             beta_literals_sets = [_retrieve_beta_literals(center) for center in kmeans.cluster_centers_]
@@ -102,7 +102,7 @@ def _blr__clusters(ciphertext_n__hdf5_file):
         def _spectral_clustering():
 
             ciphertext_vectors = np.array(list(map(_monomial_to_vector, ciphertext)))
-            clusters = sklearn.cluster.SpectralClustering(n_clusters=BETA, random_state=0, affinity='nearest_neighbors')
+            clusters = sklearn.cluster.SpectralClustering(n_clusters=ALPHA, random_state=0, affinity='nearest_neighbors')
             clusters.fit(ciphertext_vectors)
             labels = clusters.labels_
 
