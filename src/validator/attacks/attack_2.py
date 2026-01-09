@@ -1,12 +1,12 @@
 import argparse
 import os
 import sys
-import galois
 import h5py
 import numpy as np
-import itertools
+from itertools import combinations
 from ..parameters import *
 from ..helpers import *
+from functools import partial
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,22 +16,46 @@ sys.path.append(
 def _literals_sets(ciphertext_file, clauses_file):
 
     if "ciphertext" in ciphertext_file:
-        ciphertext = ciphertext_file["ciphertext"][:]
-        k = np.arange(2, M+1)
-        # s_1 = [np.unique(np.concatenate(x)) for x in itertools.combinations(ciphertext, 2)]
-        # s_1 = [set(np.concatenate(x)) for x in itertools.combinations(ciphertext, 2)]
-        s_1 = [
-            set(np.concatenate(x)).union()
-            # a         ->
-            # b         ->
-            # c         ->
-            for x in itertools.combinations(ciphertext, 2)
-        ]
+
+        #########
+        # 1
+        #########
+
+        c = [set(x) for x in ciphertext_file["ciphertext"][:]]
+        s = [set().union(*subset) for subset in combinations(c, 2)]
+
+        #########
+        # 2
+        #########
+
+        def contained(monomial, literal):
+            return literal in monomial
+
+        r = np.arange(2, N + 2)
+        shared = dict(
+            zip(
+                r,
+                [set().union(*filter(partial(contained, literal=l), c)) for l in r],
+            )
+        )
+
+        # s2 = [[subset.union(shared.get(v, set())) for v in subset] for subset in s]
+        print(len(s))
+        s2 = [[subset.union(shared.get(v, set())) for v in subset] for subset in s]
+        for subset in s2:
+            print(subset, "\n")
 
         # For each variable in s,
         # for each clause from the public key that shares a variable with s,
         # union the variables in that clause with s.
-        print(s_1)
+
+        # s2 = [
+        #     set(np.concatenate(x))  # .union()
+        #     # a         ->
+        #     # b         ->
+        #     # c         ->
+        #     for x in combinations(s, 2)
+        # ]
 
 
 def _recover_plaintext(ciphertext_file, clauses_file):

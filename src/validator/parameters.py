@@ -6,10 +6,10 @@ LEAVE_CLAUSES_UNSORTED = False  # Optimization if clause order is unimportant.
 ### Encryption parameters
 PLAINTEXT = "r"  # Plaintext. [0, 1, or "r" (random)]
 N = 100  # Number of variables total.
-M = 10  # Number of clauses total. [M > N]
+M = 30  # Number of clauses total. [M > N]
 K = 3  # Number of variables per clause.
 BETA = 3  # Number of clauses per row.
-ALPHA = 10  # Number of rows.
+ALPHA = 30  # Number of rows.
 
 ### Encryption invariants [Section 2.2]
 CONDITIONS_B_C = True

@@ -54,31 +54,35 @@ def _evaluate(args):
                 cipher = run_zsh(cmd, capture=True)
                 file.write(cipher.stdout)
 
-        cmd = f"python3 -m validator.primitives.decrypt {i}"
-        decryption_results = run_zsh(cmd, capture=True)
-        decryption = int(decryption_results.stdout[:-1])
+        if args.generate_only:
+            s = f"ciphertext {i} created: y={plaintext}"
+        else:
+            cmd = f"python3 -m validator.primitives.decrypt {i}"
+            decryption_results = run_zsh(cmd, capture=True)
+            decryption = int(decryption_results.stdout[:-1])
 
 
-        cmd = f"python3 -m validator.attacks.attack {i}"
-        attack_results = run_zsh(cmd, capture=True)
-        try:
-            attack = int(attack_results.stdout[:-1])
-        except ValueError as e:
-            print(e, attack_results)
-            return
+            cmd = f"python3 -m validator.attacks.attack {i}"
+            attack_results = run_zsh(cmd, capture=True)
+            try:
+                attack = int(attack_results.stdout[:-1])
+            except ValueError as e:
+                print(e, attack_results)
+                return
 
 
-        code = attack
-        if code >= 0:
-            code = int(code == decryption)
-        if code < 0:
-            code = -1
+            code = attack
+            if code >= 0:
+                code = int(code == decryption)
+            if code < 0:
+                code = -1
 
-        RESULT_STRINGS_PLURAL = {1: "successes", 0: "failures", -1: "errors"}
-        RESULT_STRINGS_SINGULAR = {1: "success", 0: "failure", -1: "error"}
+            RESULT_STRINGS_PLURAL = {1: "successes", 0: "failures", -1: "errors"}
+            RESULT_STRINGS_SINGULAR = {1: "success", 0: "failure", -1: "error"}
 
-        attack_results_counts[RESULT_STRINGS_PLURAL.get(code)] += 1
-        s = f"ciphertext {i}: {RESULT_STRINGS_SINGULAR[code]:<10} y={decryption} \u2227 attack(pub,c)={attack}"
+            attack_results_counts[RESULT_STRINGS_PLURAL.get(code)] += 1
+            s = f"ciphertext {i}: {RESULT_STRINGS_SINGULAR[code]:<10} y={decryption} \u2227 attack(pub,c)={attack}"
+        
         progress_bar.write(s)
         progress_bar.set_postfix(attack_results_counts, refresh=True)
 
@@ -86,6 +90,7 @@ def _evaluate(args):
 def main():
     parser = argparse.ArgumentParser(prog="Evaluate")
     parser.add_argument("n", type=int)
+    parser.add_argument('-g', '--generate-only', action='store_true')
     args = parser.parse_args()
     _evaluate(args)
 
