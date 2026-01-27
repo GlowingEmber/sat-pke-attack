@@ -18,7 +18,7 @@ sys.path.append(
 )
 
 
-def _variables_sets(ciphertext_file, public_key_file):
+def _variables_sets(ciphertext_file, public_key_file, attempt_number):
 
     if "ciphertext" not in ciphertext_file:
         raise KeyError()
@@ -33,8 +33,7 @@ def _variables_sets(ciphertext_file, public_key_file):
     print(0)
 
     clauses_sharing_variable__dict = {
-        v: [(set(c[0]), c) for c in public_key if v in c[0]]
-        for v in range(2, N + 2)
+        v: [(set(c[0]), c) for c in public_key if v in c[0]] for v in range(2, N + 2)
     }
 
     print(clauses_sharing_variable__dict)
@@ -83,29 +82,35 @@ def _variables_sets(ciphertext_file, public_key_file):
 
         ######### 3
 
-        count = min(100, 2 ** r)
-        sample_space = 2 ** r
+        SAMPLE_COUNT = 10 ** (attempt_number + 1)
+        HIT_THRESHOLD = 0.3 * SAMPLE_COUNT
+
+        count = min(SAMPLE_COUNT, 2**r)
+        sample_space = 2**r
         hits = 0
 
         for sample in secure.sample(range(sample_space), count):
-            m_indices = [i for i, b in enumerate(f"{bin(sample)[2:]:0>{r}}") if b == '1']
+            m_indices = [
+                i for i, b in enumerate(f"{bin(sample)[2:]:0>{r}}") if b == "1"
+            ]
             m = tuple(sorted(vars_excluding_c_1[i] for i in m_indices))
             if m in ciphertext:
                 hits += 1
-                if hits >= 30:
+                if hits >= HIT_THRESHOLD:
                     keep = True
                     break
-
 
         print(keep)
         if keep:
             t_prime.append(t_i)
 
     print(t_prime)
+    print("Done!")
 
 
 def _linearization(ciphertext_file, public_key_file):
-    t = _variables_sets(ciphertext_file, public_key_file)
+    attempt_number = 1
+    t = _variables_sets(ciphertext_file, public_key_file, attempt_number)
 
 
 def attack(args):
