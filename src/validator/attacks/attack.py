@@ -50,7 +50,13 @@ def _variables_sets(ciphertext_file, public_key_file, attempt_number):
 
     print(2)
 
+    clause_group_cache = {}
+
     def get_clause_group(s_prime_i_vars__set):
+
+        cache_key = frozenset(s_prime_i_vars__set)
+        if cache_key in clause_group_cache:
+            return clause_group_cache[cache_key]
 
         beta_group = set()
         for v in s_prime_i_vars__set:
@@ -58,13 +64,16 @@ def _variables_sets(ciphertext_file, public_key_file, attempt_number):
                 if c[0] <= s_prime_i_vars__set:
                     beta_group.add(c[1])
 
-        return list(beta_group)
+        result = list(beta_group)
+        clause_group_cache[cache_key] = result
+        return result
 
     t = (get_clause_group(s_prime_i) for s_prime_i in flatten.from_iterable(s_prime))
 
     t_prime = []
 
     for i, t_i in enumerate(t):
+        # print(i)
 
         keep = False
 
@@ -86,17 +95,47 @@ def _variables_sets(ciphertext_file, public_key_file, attempt_number):
         HIT_THRESHOLD = 0.3 * SAMPLE_COUNT
 
         count = min(SAMPLE_COUNT, 2**r)
+
+
+        ### APPROACH 2
+
+        # hits = 0
+        # samples = set()
+
+        # for _ in range(count):
+        #     m = [v for v in vars_excluding_c_1 if secure.random() < 0.5]
+        #     m = tuple(sorted(m))
+        #     if m in samples:
+        #         continue
+        #     samples.add(m)
+        #     if m in ciphertext:
+        #         hits += 1
+        #     if hits >= HIT_THRESHOLD:
+        #         keep = True
+        #         break
+
+        ### APPROACH 1
+
+        count = min(SAMPLE_COUNT, 2**r)
         sample_space = 2**r
         hits = 0
 
-        for sample in secure.sample(range(sample_space), count):
-            m_indices = [
-                i for i, b in enumerate(f"{bin(sample)[2:]:0>{r}}") if b == "1"
-            ]
+        seen_samples = set()
+        samples_drawn = 0
+        
+        while samples_drawn < count:
+            sample = secrets.randbelow(sample_space)
+            if sample in seen_samples:
+                continue
+
+            seen_samples.add(sample)
+            samples_drawn += 1
+
+            m_indices = [i for i in range(r) if (sample >> i) & 1]
             m = tuple(sorted(vars_excluding_c_1[i] for i in m_indices))
             if m in ciphertext:
                 hits += 1
-                if hits >= HIT_THRESHOLD:
+            if hits >= HIT_THRESHOLD:
                     keep = True
                     break
 
