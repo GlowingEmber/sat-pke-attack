@@ -16,14 +16,12 @@ sys.path.append(
 )
 
 
-def _variables_sets(ciphertext_file, public_key_file, attempt_number):
-
-    if "ciphertext" not in ciphertext_file:
-        raise KeyError()
+def _variables_sets(ciphertext_set, public_key_file, attempt_number):
 
     public_key_incl_sign = [tuple(c) for c in ast.literal_eval(public_key_file.read())]
     public_key = [(tuple(zip(*c))[0], c) for c in public_key_incl_sign]
-    ciphertext = {tuple(m) for m in ciphertext_file["ciphertext"]}
+    # ciphertext = {tuple(m) for m in ciphertext_file["ciphertext"]}
+    ciphertext = ciphertext_set
 
 
     var_to_bit = {v: 1 << (v - 2) for v in range(2, N + 2)}
@@ -111,8 +109,9 @@ def _variables_sets(ciphertext_file, public_key_file, attempt_number):
 
         ######### 2
 
-        t_i_all_vars = set(flatten(*(c[0] for c in t_i)))
-        vars_excluding_c_1 = list(t_i_all_vars - m_star)
+        c_1_vars = set(t_i[0][0])
+        t_i_other_vars = set(flatten(*(c[0] for c in t_i[1:])))
+        vars_excluding_c_1 = list(t_i_other_vars - c_1_vars)
         r = len(vars_excluding_c_1)
 
         ######### 3
@@ -128,16 +127,22 @@ def _variables_sets(ciphertext_file, public_key_file, attempt_number):
         samples_drawn = 0
 
         while samples_drawn < count:
-            sample = random.randrange(sample_space)
-            if sample in seen_samples:
-                continue
+            if r > 0:
+                sample = random.randrange(sample_space)
+                if sample in seen_samples:
+                    continue
 
-            seen_samples.add(sample)
+                seen_samples.add(sample)
+
+                m_indices = [i for i in range(r) if (sample >> i) & 1]
+                m_j = set(vars_excluding_c_1[i] for i in m_indices)
+            else:
+                m_j = set()
+
             samples_drawn += 1
-
-            m_indices = [i for i in range(r) if (sample >> i) & 1]
-            m = tuple(sorted(vars_excluding_c_1[i] for i in m_indices))
-            if m in ciphertext:
+            
+            m_star_m_j = tuple(sorted(m_star | m_j))
+            if m_star_m_j in ciphertext:
                 hits += 1
             if hits >= HIT_THRESHOLD:
                 keep = True
@@ -147,13 +152,97 @@ def _variables_sets(ciphertext_file, public_key_file, attempt_number):
         if keep:
             t_prime.append(t_i)
 
-    print(t_prime)
-    print("Done!")
+    return t_prime
 
 
 def _linearization(ciphertext_file, public_key_file):
+
+    if "ciphertext" not in ciphertext_file:
+        raise KeyError()
+
+    ciphertext_set = {tuple(m) for m in ciphertext_file["ciphertext"]}
+
+
     attempt_number = 1
-    t = _variables_sets(ciphertext_file, public_key_file, attempt_number)
+    t_prime = _variables_sets(ciphertext_set, public_key_file, attempt_number)
+
+    a_terms = defaultdict(list)
+    coefficient_count = 0
+    for t_prime_i in t_prime:
+
+        t_prime_i_incl_sign = [c[1] for c in t_prime_i]
+
+        C = [cnf_to_neg_anf(list(c)) for c in t_prime_i_incl_sign]
+        for i, C_i in enumerate(C):
+
+            C_i = np.fromiter(list(C_i), dtype=object)
+            C_minus_C_i = list(t_prime_i_incl_sign[:i]) + list(t_prime_i_incl_sign[i + 1 :])
+            R_i_literals_set = list(set([l[0] for l in flatten(*C_minus_C_i)]))
+            R_terms = np.fromiter(distribute(R_i_literals_set), dtype=object)
+            n = len(R_terms)
+            coefficient_count += n
+
+            R_i_terms = R_terms
+            R_i_coefficients = np.fromiter(
+                map(
+                    lambda i: Coefficient(i),
+                    range(coefficient_count - n, coefficient_count),
+                ),
+                dtype=object,
+            )
+            R_i = np.fromiter(zip(R_i_coefficients, R_i_terms), dtype=object)
+
+            #####
+            unformatted_C_iR_i = np.fromiter(cartesian(R_i, C_i), dtype=object)
+            
+            C_iR_i = []
+
+            for term in unformatted_C_iR_i:
+
+                coefficient = term[0][0]
+                literals = tuple(sorted([int(x) for x in set(term[0][1] + term[1])]))
+                full_term = (coefficient, literals)
+                C_iR_i.append(full_term)
+
+            for term in C_iR_i:
+
+                coefficient = term[0]
+                literals = term[1]
+                a_terms[literals] = a_terms[literals] + [coefficient]
+            
+        def clause_vector(coefficients, cols):
+            v = np.zeros(cols)
+            for c in coefficients:
+                v[c.value] = int(not v[c.value])
+            return v
+
+    # ciphertext = set(map(lambda x: tuple([int(l) for l in x]), ciphertext))
+
+
+    rows = len(a_terms.keys())
+    cols = coefficient_count
+
+    a = np.zeros((rows, cols), dtype=np.int64)
+    b = np.zeros(rows, dtype=np.int64)
+
+    for i, term in enumerate(a_terms):
+        
+        a[i] = clause_vector(a_terms[term], cols)
+        b[i] = int(term in ciphertext_set)
+
+
+    GF = galois.GF(2)
+    a = GF(a)
+    b = GF(b)
+
+    rank_a = np.linalg.matrix_rank(a)
+    augmented_matrix = np.hstack((a, b.reshape(-1, 1)))
+    rank_augmented = np.linalg.matrix_rank(augmented_matrix)
+    y = int(rank_a != rank_augmented)
+
+    return y
+
+
 
 
 def attack(args):
